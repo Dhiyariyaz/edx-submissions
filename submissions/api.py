@@ -6,6 +6,7 @@ Public interface for the submissions app.
 import itertools
 import logging
 import operator
+import warnings
 from uuid import UUID
 
 from django.conf import settings
@@ -221,7 +222,10 @@ def get_submission(submission_uuid, read_replica=False):
             raise SubmissionRequestError(
                 msg=f"submission_uuid ({submission_uuid!r}) must be serializable"
             )
-
+    # In previous versions of jsonfield, an error was raised whenever invalid json value was spotted,
+    # in version 3.1.0, this is changed and now a RuntimeWarning is emitted, so catching that warning
+    # to keep the endpoint response format consistent to previous version
+    warnings.filterwarnings('error')
     cache_key = Submission.get_cache_key(submission_uuid)
     try:
         cached_submission_data = cache.get(cache_key)
@@ -244,8 +248,9 @@ def get_submission(submission_uuid, read_replica=False):
         raise SubmissionNotFoundError(
             f"No submission matching uuid {submission_uuid}"
         ) from error
-    except Exception as exc:
+    except (Exception, RuntimeWarning) as exc:
         # Something very unexpected has just happened (like DB misconfig)
+        # or an invalid json value is found in JSONField (submission.answer)
         err_msg = f"Could not get submission due to error: {exc}"
         logger.exception(err_msg)
         raise SubmissionInternalError(err_msg) from exc

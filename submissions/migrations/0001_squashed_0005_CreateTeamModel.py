@@ -5,6 +5,7 @@ import uuid
 import django.db.models.deletion
 import django.utils.timezone
 import jsonfield.encoder
+import jsonfield.fields
 import model_utils.fields
 from django.conf import settings
 from django.db import migrations, models
@@ -66,7 +67,7 @@ class Migration(migrations.Migration):
                     db_index=True, default=django.utils.timezone.now)),
                 ('created_at', models.DateTimeField(
                     db_index=True, default=django.utils.timezone.now, editable=False)),
-                ('answer', submissions.models.UpdatedJSONField(
+                ('answer', jsonfield.fields.JSONField(
                     blank=True,
                     db_column='raw_answer',
                     dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, load_kwargs={})),
