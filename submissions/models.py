@@ -10,7 +10,6 @@ need to then generate a matching migration for it using:
 
 """
 
-import json
 import logging
 from uuid import uuid4
 
