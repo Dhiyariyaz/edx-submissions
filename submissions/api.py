@@ -222,10 +222,6 @@ def get_submission(submission_uuid, read_replica=False):
             raise SubmissionRequestError(
                 msg=f"submission_uuid ({submission_uuid!r}) must be serializable"
             )
-    # In previous versions of jsonfield, an error was raised whenever invalid json value was spotted,
-    # in version 3.1.0, this is changed and now a RuntimeWarning is emitted, so catching that warning
-    # to keep the endpoint response format consistent to previous version
-    warnings.filterwarnings('error')
     cache_key = Submission.get_cache_key(submission_uuid)
     try:
         cached_submission_data = cache.get(cache_key)
@@ -240,6 +236,11 @@ def get_submission(submission_uuid, read_replica=False):
         return cached_submission_data
 
     try:
+        # In previous versions of jsonfield, an error was raised whenever invalid json value was spotted,
+        # in version 3.1.0, this is changed and now a RuntimeWarning is emitted, so catching that warning
+        # to keep the endpoint response format consistent to previous version
+        warnings.filterwarnings('error')
+
         submission = _get_submission_model(submission_uuid, read_replica)
         submission_data = SubmissionSerializer(submission).data
         cache.set(cache_key, submission_data)
@@ -254,6 +255,9 @@ def get_submission(submission_uuid, read_replica=False):
         err_msg = f"Could not get submission due to error: {exc}"
         logger.exception(err_msg)
         raise SubmissionInternalError(err_msg) from exc
+    finally:
+        # Switching filterwarnings back to its default behaviour
+        warnings.filterwarnings('default')
 
     logger.info("Get submission %s", submission_uuid)
     return submission_data
