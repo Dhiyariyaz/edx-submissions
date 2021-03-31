@@ -254,6 +254,10 @@ def get_submission(submission_uuid, read_replica=False):
         # or an invalid json value is found in JSONField (submission.answer)
         err_msg = f"Could not get submission due to error: {exc}"
         logger.exception(err_msg)
+
+        # Switching filterwarnings back to its default behaviour
+        warnings.filterwarnings('default')
+
         raise SubmissionInternalError(err_msg) from exc
     finally:
         # Switching filterwarnings back to its default behaviour
